@@ -1,0 +1,60 @@
+html {
+  font-size: 16px;
+  font-family: sans-serif;
+}
+
+header {
+  margin-top: 60px;
+}
+
+header .description {
+  background-image: url('/assets/images/avatar.jpg');
+  width: 130px;
+  height: 130px;
+  margin: 0 auto;
+  border-radius: 50%;
+  background-size: cover;
+}
+
+header p {
+  text-align: center;
+}
+
+header .name {
+  font-weight: bold;
+}
+
+header .desc {
+  color: #65737E;
+}
+
+header nav ul {
+  padding: 20px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+}
+
+header nav ul li {
+  list-style: none;
+  display: inline-block;
+  width: 80px;
+  text-align: center;
+  margin-right: 12px;
+  border-bottom: 2px solid transparent;
+  transition: border-color .3s cubic-bezier(.645, .045, .355, 1);
+  cursor: pointer;
+}
+
+header nav ul li:hover {
+  border-bottom: 2px solid #343D46;
+}
+
+header nav ul li a {
+  text-decoration: none;
+  color: #343D46;
+  display: inline-block;
+  height: 100%;
+  width: 100%;
+  line-height: 40px;
+}

@@ -1,0 +1,33 @@
+doctype html
+html
+  head
+    title Alander
+    link(rel="stylesheet" href="/assets/styles/header.css")
+    link(rel="stylesheet" href="/assets/styles/footer.css")
+    link(rel="stylesheet" href="/assets/styles/index.css")
+  body
+    include ./components/header.pug
+    div
+      .container
+        h2
+          span 心情
+        p 还没明白自己到底喜欢什么。心思飘忽不定永远在选择，永远在后悔。我的体内有个诗人的灵魂，不过貌似找不到了。
+        h2
+          span 技能
+        ul
+          li HTML/CSS/JavaScript
+          li Vue.js
+          li React
+          li TypeScript
+          li NodeJs
+          li Git
+        h2
+          span 联系方式
+        ul
+          li.contact-item
+            span.label GitHub：
+            a(href="https://github.com/LhrAlander") LhrAlander
+          li.contact-item
+            span.label E-Mail：
+            a(href="javascript:void(0)") AlanderLt@163.com
+    include ./components/footer.pug
