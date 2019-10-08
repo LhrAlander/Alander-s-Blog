@@ -1,0 +1,22 @@
+doctype html
+html
+  head
+    title Alander
+    link(rel="stylesheet" href="/assets/styles/common.css")
+    link(rel="stylesheet" href="/assets/styles/header.css")
+    link(rel="stylesheet" href="/assets/styles/footer.css")
+    link(rel="stylesheet" href="/assets/styles/font.css")
+    link(rel="stylesheet" href="/assets/styles/about.css")
+  body
+    .with-footer
+      include ./components/header.pug
+      div.full-content
+        .container
+          h2
+            span 文章
+          ul
+            each info in articles
+              li
+                a(href=`/blogs/${info.fileName}`) #{info.title}
+                span #{`(${info.createTime})`}
+      include ./components/footer.pug

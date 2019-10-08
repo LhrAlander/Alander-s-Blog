@@ -1,9 +1,9 @@
 #footer {
-  margin-top: 2em;
   padding: 1em;
+  width: 100%;
   background-color: #fafafa;
   text-align: center;
-  color: rgba(0, 0, 0, .6);
+  color: rgba(0, 0, 0, 0.6);
 }
 
 #footer .heart {
@@ -13,7 +13,8 @@
   height: 20px;
 }
 
-#footer .heart:before, #footer .heart:after {
+#footer .heart:before,
+#footer .heart:after {
   position: absolute;
   content: "";
   left: 10px;

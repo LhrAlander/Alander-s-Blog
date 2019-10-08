@@ -1,0 +1,16 @@
+.container {
+  width: 640px;
+  margin: 0 auto;
+  font-family: "Noto Serif SC";
+  font-size: 16px;
+  color: #24292e;
+}
+
+.container strong {
+  background: #efefef;
+  margin-right: 8px;
+}
+
+.container li {
+  margin-bottom: 16px;
+}
