@@ -5,96 +5,29 @@ const inquirer = require('inquirer');
 const autocomplete = require('inquirer-autocomplete-prompt')
 const fs = require('fs')
 const path = require('path')
+const hljs = require('highlight.js')
+const Markdown = require('markdown-it')
+const pug = require('pug')
 
 inquirer.registerPrompt('autocomplete', autocomplete);
 
 const articleDir = fs.readdirSync(path.resolve(__dirname, 'source'))
+const htmlDirs = fs.readdirSync(path.resolve(__dirname, 'static/blogs'))
 
-// var questions = [
-//   {
-//     type: 'confirm',
-//     name: 'toBeDelivered',
-//     message: 'Is this for delivery?',
-//     default: false
-//   },
-//   {
-//     type: 'input',
-//     name: 'phone',
-//     message: "What's your phone number?",
-//     validate: function (value) {
-//       var pass = value.match(
-//         /^([01]{1})?[-.\s]?\(?(\d{3})\)?[-.\s]?(\d{3})[-.\s]?(\d{4})\s?((?:#|ext\.?\s?|x\.?\s?){1}(?:\d+)?)?$/i
-//       );
-//       if (pass) {
-//         return true;
-//       }
-
-//       return 'Please enter a valid phone number';
-//     }
-//   },
-//   {
-//     type: 'list',
-//     name: 'size',
-//     message: 'What size do you need?',
-//     choices: ['Large', 'Medium', 'Small'],
-//     filter: function (val) {
-//       return val.toLowerCase();
-//     }
-//   },
-//   {
-//     type: 'input',
-//     name: 'quantity',
-//     message: 'How many do you need?',
-//     validate: function (value) {
-//       var valid = !isNaN(parseFloat(value));
-//       return valid || 'Please enter a number';
-//     },
-//     filter: Number
-//   },
-//   {
-//     type: 'expand',
-//     name: 'toppings',
-//     message: 'What about the toppings?',
-//     choices: [
-//       {
-//         key: 'p',
-//         name: 'Pepperoni and cheese',
-//         value: 'PepperoniCheese'
-//       },
-//       {
-//         key: 'a',
-//         name: 'All dressed',
-//         value: 'alldressed'
-//       },
-//       {
-//         key: 'w',
-//         name: 'Hawaiian',
-//         value: 'hawaiian'
-//       }
-//     ]
-//   },
-//   {
-//     type: 'rawlist',
-//     name: 'beverage',
-//     message: 'You also get a free 2L beverage',
-//     choices: ['Pepsi', '7up', 'Coke']
-//   },
-//   {
-//     type: 'input',
-//     name: 'comments',
-//     message: 'Any comments on your purchase experience?',
-//     default: 'Nope, all good!'
-//   },
-//   {
-//     type: 'list',
-//     name: 'prize',
-//     message: 'For leaving a comment, you get a freebie',
-//     choices: ['cake', 'fries'],
-//     when: function (answers) {
-//       return answers.comments !== 'Nope, all good!';
-//     }
-//   }
-// ];
+const mapHtml = (function () {
+  return htmlDirs.reduce((obj, dirName) => {
+    try {
+      const jsonFile = fs.readFileSync(path.resolve(__dirname, `./static/blogs/${dirName}/info.json`))
+      if (jsonFile) {
+        const info = JSON.parse(jsonFile.toString())
+        obj[info.markdownName] = info
+      }
+      return obj
+    } catch (error) {
+      return obj
+    }
+  }, {})
+})()
 
 function searchArticle(answers, input) {
   return new Promise((resolve) => {
@@ -102,8 +35,45 @@ function searchArticle(answers, input) {
   })
 }
 
-let questions = [
-  {
+const md = Markdown({
+	highlight(str, lang) {
+		if (lang && hljs.getLanguage(lang)) {
+			try {
+				let value = hljs.highlight(lang, str).value
+				let lineNumber = `<div class="line-numbers-wrapper">`
+				for (let i = 1, l = value.split('\n').length; i < l; i++) {
+					lineNumber += `<span class="line-number">${i}</span>`
+				}
+				lineNumber += `</div>`
+				console.log(lineNumber)
+				return lineNumber + value
+			} catch (__) { }
+		}
+
+		return '' // use external default escaping
+	}
+})
+
+function addNewHtml (answers) {
+  console.log('add')
+  try {
+    const data = fs.readFileSync(path.resolve(__dirname, `./source/${answers.article}`), { encoding: 'utf8' })
+    answers.createTime = new Date().toLocaleDateString()
+    answers.updateTime = answers.createTime
+    if (data) {
+      const html = md.render(data)
+      const string = pug.renderFile(path.resolve(__dirname, './views/blog.pug'), { data: html, title: answers.title, date: answers.createTime })
+      fs.mkdirSync(path.resolve(__dirname, `./static/blogs/${answers.fileName}`))
+      fs.writeFileSync(path.resolve(__dirname, `./static/blogs/${answers.fileName}/index.html`), string)
+      fs.writeFileSync(path.resolve(__dirname, `./static/blogs/${answers.fileName}/info.json`), JSON.stringify(answers))
+      console.log('add file successfully!')
+    }
+  } catch (error) {
+    console.error('something goes wrong', error) 
+  }
+}
+
+let questions = [{
     type: 'autocomplete',
     name: 'article',
     message: 'The name of the article which is going to be operated',
@@ -118,8 +88,7 @@ let questions = [
     type: 'expand',
     name: 'mode',
     message: 'What operate will be done with the article?',
-    choices: [
-      {
+    choices: [{
         key: 'a',
         name: 'add a new html file with the markdown article',
         value: 'add'
@@ -134,22 +103,44 @@ let questions = [
   {
     type: 'input',
     name: 'fileName',
-    message: "What's them html file's name?",
+    message: "what's them html file's name?",
     default: function (answers) {
       if (answers.mode === 'add') {
+        return ``
       }
-      return ``
+      return mapHtml[answers.article].fileName
     },
     validate: function (value) {
-      console.log(arguments)
       if (value) {
         return true;
       }
-      return 'Please enter a name for html file'
+      return 'please enter a name for html file'
+    }
+  },
+  {
+    type: 'input',
+    name: 'title',
+    message: "what's the html file's title?",
+    default: function (answers) {
+      if (answers.mode === 'add') {
+        return ``
+      }
+      return mapHtml[answers.article].title
+    },
+    validate: function (value) {
+      if (value) {
+        return true;
+      }
+      return 'please enter a title for html file'
     }
   }
 ]
 
 inquirer.prompt(questions).then(answers => {
   console.log(answers)
+  if (answers.mode === 'add') {
+    addNewHtml(answers)
+  } else {
+    editHtml(answers)
+  }
 });
