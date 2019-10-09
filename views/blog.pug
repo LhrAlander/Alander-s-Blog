@@ -6,11 +6,12 @@ html
     link(rel="stylesheet" href="/assets/styles/header.css")
     link(rel="stylesheet" href="/assets/styles/footer.css")
     link(rel="stylesheet" href="/assets/styles/blog.css")
+    link(rel="stylesheet", href="/assets/styles/markdown.css")
   body
     include ./components/header.pug
-    .container
-      h1.title #{title}
-      p.time #{date} !{data}
+    .markdown-body !{data}
+      //- h1.title #{title}
+      
     include ./components/footer.pug
     script(src="/libs/highlights/index.js")
     //- script(src="/assets/scripts/highLight.js")

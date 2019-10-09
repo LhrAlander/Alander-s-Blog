@@ -20,7 +20,8 @@ const md = Markdown({
 		}
 
 		return '' // use external default escaping
-	}
+	},
+	html: true
 })
 
 const app = express()
