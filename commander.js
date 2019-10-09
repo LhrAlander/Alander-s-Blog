@@ -76,10 +76,10 @@ function addNewHtml(answers) {
 }
 
 function editHtml(answers) {
-  console.log('edit')
-  answers.updateTime = new Date().toLocaleDateString()
+  const info = mapHtml[answers.article]
+  info.updateTime = new Date().toLocaleDateString()
   try {
-    writeToHtml(answers)
+    writeToHtml(info)
     console.log('edit file successfully!')
   } catch (error) {
     console.error(error)
