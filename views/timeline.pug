@@ -1,0 +1,19 @@
+doctype html
+html
+  head
+    title TimeLine
+    link(rel="stylesheet" href="/assets/styles/header.css")
+    link(rel="stylesheet" href="/assets/styles/footer.css")
+    link(rel="stylesheet" href="/assets/styles/font.css")
+    link(rel="stylesheet" href="/assets/styles/timeline.css")
+  body
+    include ./components/header.pug
+    .container
+      h3 一路走来忘了许多，记住许多
+      h4 （不断更新）
+      ul
+        each key in order
+          li
+            strong #{key}
+            span #{items[key]}
+    include ./components/footer.pug

@@ -23,6 +23,12 @@ app.get('/', (_req, res) => {
 	res.render('posts', { articles })
 })
 
+app.get('/timeline', (_req, res) => {
+	const items = JSON.parse(fs.readFileSync(path.resolve(__dirname, './timeline.json'), { encoding: 'utf8' }))
+	const order = Object.keys(items).sort((a, b) => a > b ? -1 : 1)
+	res.render('timeline', { items, order })
+})
+
 app.listen(3000, () => {
 	console.log('Example app listening on port 3000!')
 })
