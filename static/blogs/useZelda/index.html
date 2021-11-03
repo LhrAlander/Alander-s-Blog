@@ -1,0 +1,110 @@
+<!DOCTYPE html><html><head><title>Alander</title><link rel="stylesheet" href="/libs/highlights/styles/atom-one-dark.css"><link rel="stylesheet" href="/assets/styles/header.css"><link rel="stylesheet" href="/assets/styles/common.css"><link rel="stylesheet" href="/assets/styles/footer.css"><link rel="stylesheet" href="/assets/styles/font.css"><link rel="stylesheet" href="/assets/styles/blog.css"><link rel="stylesheet" href="/assets/styles/markdown.css"></head><body><div class="with-footer"><header><div class="description"></div><p class="name">Alander Lin</p><p class="desc">可能这有点丢脸，但我并没有丢掉我的心</p><nav><ul><li><a href="/">文章</a></li><li><a href="/timeline">时间轴</a></li><li><a href="/about">关于我</a></li></ul></nav></header><div class="markdown-body full-content"><h1>背景</h1>
+<p>当我们写React的时候我们该考虑什么？对于一部分同学会花费大量精力去研读React特性的部分源码，在实践中应用起来，对他们来说心智负担=0。对于大部分api调用者来说，可能考虑更多的是如何组织数据并让数据按照预期地渲染在页面上。</p>
+<p>React带来的hooks比较完美地解决了这个问题，在 <em>变与不变</em> 间提供了 <code>useRef</code> 和 <code>useReducer</code>，我们着重理解下 <a href="https://zh-hans.reactjs.org/docs/hooks-reference.html#usereducer">useReducer</a>，告诉reducer 需要做的动作，reducer会负责更新数据并渲染页面。</p>
+<h1>痛点</h1>
+<p>来看下一个reducer的demo：</p>
+<pre><code class="language-js"><span class="hljs-keyword">const</span> initialState = {<span class="hljs-attr">count</span>: <span class="hljs-number">0</span>};
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">reducer</span>(<span class="hljs-params">state, action</span>) </span>{
+  <span class="hljs-keyword">switch</span> (action.type) {
+    <span class="hljs-keyword">case</span> <span class="hljs-string">'increment'</span>:
+      <span class="hljs-keyword">return</span> {<span class="hljs-attr">count</span>: state.count + <span class="hljs-number">1</span>};
+    <span class="hljs-keyword">case</span> <span class="hljs-string">'decrement'</span>:
+      <span class="hljs-keyword">return</span> {<span class="hljs-attr">count</span>: state.count - <span class="hljs-number">1</span>};
+    <span class="hljs-keyword">default</span>:
+      <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>();
+  }
+}
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">Counter</span>(<span class="hljs-params"></span>) </span>{
+  <span class="hljs-keyword">const</span> [state, dispatch] = useReducer(reducer, initialState);
+  <span class="hljs-keyword">return</span> (
+    <span class="xml"><span class="hljs-tag">&lt;&gt;</span>
+      Count: {state.count}
+      <span class="hljs-tag">&lt;<span class="hljs-name">button</span> <span class="hljs-attr">onClick</span>=<span class="hljs-string">{()</span> =&gt;</span> dispatch({type: 'decrement'})}&gt;-<span class="hljs-tag">&lt;/<span class="hljs-name">button</span>&gt;</span>
+      <span class="hljs-tag">&lt;<span class="hljs-name">button</span> <span class="hljs-attr">onClick</span>=<span class="hljs-string">{()</span> =&gt;</span> dispatch({type: 'increment'})}&gt;+<span class="hljs-tag">&lt;/<span class="hljs-name">button</span>&gt;</span>
+    <span class="hljs-tag">&lt;/&gt;</span></span>
+  );
+}
+</code></pre>
+<p>reducer本身是个函数，在这里面处理各种case，最终目的是返回下一个状态数据。这个模式如果正常写下来其实是不适合业务代码堆砌的：</p>
+<ul>
+<li>不适合逻辑分离和复用</li>
+<li>不适合流式处理业务逻辑和逻辑组合</li>
+</ul>
+<p>比如：初始化业务的时候需要做：获取用户 + 获取配置，过程中还有单独的业务：获取用户、获取配置。代码组织方面比较繁琐。</p>
+<p>如果抛开React谈业务是不是下面这段代码更加合适：</p>
+<pre><code class="language-js"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Service</span> </span>{
+  state = {
+    <span class="hljs-attr">user</span>: <span class="hljs-literal">undefined</span>,
+    <span class="hljs-attr">config</span>: <span class="hljs-literal">undefined</span>
+  }
+
+  fetchUser() {}
+
+  fetchConfig() {}
+
+  init() {
+    fetchUser();
+    fetchConfig();
+  }
+}
+</code></pre>
+<p>useZelda 只是最简单地去向这个方向靠近，代码如下：</p>
+<pre><code class="language-js"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">useZelda</span>(<span class="hljs-params">_class</span>) </span>{
+  <span class="hljs-keyword">const</span> {<span class="hljs-attr">current</span>: entity} = useRef(<span class="hljs-keyword">typeof</span> _class ? <span class="hljs-keyword">new</span> _class() : _class);
+  <span class="hljs-keyword">const</span> [reducer, dispatch] = useReducer(<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">prevState, action</span>) </span>{
+    <span class="hljs-keyword">if</span> (action.payload) {
+      <span class="hljs-keyword">return</span> action.payload;
+    }
+    <span class="hljs-keyword">return</span> prevState;
+  }, entity.state);
+
+  <span class="hljs-keyword">const</span> proxy = <span class="hljs-keyword">new</span> <span class="hljs-built_in">Proxy</span>(entity, {
+    <span class="hljs-keyword">get</span> (target, p, receiver) {
+      <span class="hljs-keyword">if</span> (p === <span class="hljs-string">'state'</span>) {
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Proxy</span>(target.state, {
+          <span class="hljs-keyword">get</span> (target, p, receiver) {
+            <span class="hljs-keyword">return</span> target[p];
+          },
+          <span class="hljs-keyword">set</span>() {
+            <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
+          }
+        });
+      }
+
+      <span class="hljs-keyword">const</span> source = target[p];
+      <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> source === <span class="hljs-string">'function'</span>) {
+        <span class="hljs-keyword">return</span> <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">...args</span>) </span>{
+          <span class="hljs-keyword">const</span> result = source.apply(target, args);
+          <span class="hljs-keyword">if</span> (result === <span class="hljs-literal">undefined</span>) {
+            <span class="hljs-keyword">return</span>;
+          }
+
+          <span class="hljs-keyword">if</span> (result &amp;&amp; <span class="hljs-keyword">typeof</span> result === <span class="hljs-string">'object'</span> &amp;&amp; <span class="hljs-keyword">typeof</span> result.then === <span class="hljs-string">'function'</span>) {
+            <span class="hljs-keyword">return</span> result;
+          }
+
+          entity.state = result;
+          dispatch({ <span class="hljs-attr">payload</span>: result });
+        }
+      }
+    },
+    <span class="hljs-keyword">set</span> (target, p, value, receiver) {
+      <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'set'</span>, target, p, value, receiver);
+      <span class="hljs-keyword">if</span> (p === <span class="hljs-string">'state'</span>) {
+        <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
+      }
+
+      target[p] = value;
+      <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;
+    }
+  });
+
+  <span class="hljs-keyword">return</span> proxy;
+}
+</code></pre>
+<p>这段代码是一段雏形，它具备了上述的写法，如果往后续发展，将中间件思想、分支概念、快照概念等各种想法加入进来可能会变成一个庞大的库，我也在项目中使用了dva，也许这种思想发展成另一条路就是dva的处理数据的方式。</p>
+<p>它是一个种子，是开放的，在日常公司业务代码中也扩展了这个库到非React应用中去：支付宝小程序。它是自由的，带给我的是想法和开放，所以我命名为Zelda，希望它的路是广阔的。</p>
+<p><a href="https://github.com/LhrAlander/code-snippet/blob/master/useZelda.js">github</a></p>
+</div><div id="footer"><div class="info">Made With <span class="heart"></span>by <span class="author">Alander Lin</span></div><p>2019 Alander Lin's Blog</p></div></div><script src="/libs/highlights/index.js"></script></body></html>
