@@ -1,9 +1,11 @@
 #footer {
   padding: 1em;
   width: 100%;
+  box-sizing: border-box;
   background-color: #fafafa;
   text-align: center;
   color: rgba(0, 0, 0, 0.6);
+  margin-top: 1em;
 }
 
 #footer .heart {
