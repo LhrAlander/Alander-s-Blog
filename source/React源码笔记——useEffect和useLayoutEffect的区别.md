@@ -11,7 +11,9 @@
 - `commitMutationEffects`阶段：执行`DOM操作`
 - `commitLayoutEffects`阶段：主要处理执行DOM操作后的一些相关操作
 
-`useEffect` 和 `useLayoutEffect` 的区别主要就在体现在这三个阶段的处理上。结论是：`useEffect` 会异步地去执行它的响应函数和上一次的销毁函数，而`useLayoutEffect` 会同步地执行它的响应函数和上一次的销毁函数，即会阻塞住 `DOM渲染`。
+`useEffect` 和 `useLayoutEffect` 的区别主要就在体现在这三个阶段的处理上。 结论是：
+1. `useEffect` 会异步地去执行它的响应函数和上一次的销毁函数。
+2. `useLayoutEffect` 会同步地执行它的响应函数和上一次的销毁函数，即会阻塞住 `DOM渲染`。
 
 ## useEffect
 ### commitBeforeMutationEffects
@@ -90,3 +92,8 @@ function flushPassiveEffectsImpl() {
 至此，我们粗略地查看了 `commit` 阶段的代码，分析了以下为什么 `useEffect` 是异步执行，而 `useLayoutEffect` 是同步执行，具体的代码我没有太过在文章中贴出来，因为这些都是可变的，真正的流程性的概览和 `React` 团队设计这一套机制的心智模型需要我们自己在不断调试代码和理解中慢慢去熟悉。
 
 后续自己感兴趣的是 `hooks` 的实现，其中比较关键的 `useReducer` 会着重看一下源码，看看能不能写个简易版本的放到支付宝小程序中去实现一个 `自定义的支付宝hooks` 用于日常生产力开发。
+
+## 补充于 2021/12/8
+初写这篇文章的时候我还没有细读`Scheduler`的代码，只知道当使用了`Scheduler_callback`方法后，注册的回调会在下个事件队列中执行，但是明没有深究为什么。最近读完了Scheduler的源码后（作为单独的一个库，而非一定需要和React绑定），理解了是如何调度的，简单来说就是通过`window.postMessage()` 来不停开启调度，然后在`on('message', handler)`中去处理，所以上文提到的`useEffect`的执行即`flushPasiveEffects`是异步的。
+
+同时上文中提到的源码中的`if((flags & Passive) !== NoFlags)`这个判断也没有讲明何时为fiber的flag ｜ Passive的，这里补充一下就是在我们调用函数式组件的时候，使用`useEffect`的时候就会执行这个flag的操作。
